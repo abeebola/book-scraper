@@ -1,15 +1,18 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 import { ScrapeRequestEntity } from './scrape-request.entity';
-import { ScrapeRequestDto } from './scrape.dto';
-import { getSearchResults, getSearchUrl } from './util';
+import { EnrichDataJob, ScrapeRequestDto } from './scrape.dto';
 
 @Injectable()
 export class ScrapeService {
   constructor(
     @InjectRepository(ScrapeRequestEntity)
     private readonly repository: Repository<ScrapeRequestEntity>,
+    @InjectQueue('book-queue')
+    private readonly bookQueue: Queue,
   ) {}
 
   async create(dto: ScrapeRequestDto) {
@@ -17,24 +20,17 @@ export class ScrapeService {
 
     try {
       await this.repository.save(entity);
+
+      await this.bookQueue.add('fetch-books', {
+        requestId: entity.id,
+        theme: dto.theme,
+      } satisfies EnrichDataJob);
     } catch (error) {
       console.error(error);
 
       throw new InternalServerErrorException();
     }
 
-    this.scrape(dto.theme).catch((error) => {
-      console.error(error);
-    });
-
     return entity;
-  }
-
-  private async scrape(searchTerm: string) {
-    const urls = [1, 2].map((page) => getSearchUrl(searchTerm, page));
-
-    const result = await Promise.all(urls.map((url) => getSearchResults(url)));
-
-    console.log(result.flat());
   }
 }

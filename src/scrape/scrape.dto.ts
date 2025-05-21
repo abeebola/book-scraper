@@ -35,3 +35,8 @@ export class ScrapeRequestResponse extends AbstractDto {
     this.updatedAt = entity.updatedAt;
   }
 }
+
+export type EnrichDataJob = {
+  requestId: string;
+  theme: string;
+};

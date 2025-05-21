@@ -1,9 +1,16 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import { BaseAbstractEntity } from '../common/types/entity';
 import { BookResponse } from './book.dto';
+import { ScrapeRequestEntity } from './scrape-request.entity';
 
 @Entity('books')
 export class BookEntity extends BaseAbstractEntity<BookResponse> {
+  @ManyToOne(() => ScrapeRequestEntity, { onDelete: 'CASCADE' })
+  request: string;
+
+  @Column({ type: 'uuid' })
+  requestId: string;
+
   @Column()
   title: string;
 
