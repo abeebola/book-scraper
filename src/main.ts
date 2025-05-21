@@ -1,16 +1,16 @@
-import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppModule } from './app.module';
-import { AppConfig } from './config/app';
-import { SWAGGER_RELATIVE_URL } from './common/swagger';
+import { NestFactory } from '@nestjs/core';
 import {
   DocumentBuilder,
   SwaggerCustomOptions,
   SwaggerModule,
 } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
-import { TrimWhitespacePipe } from './common/pipes/trim-whitespace';
+import { AppModule } from './app.module';
 import { APP_NAME, APP_VERSION } from './common/constants';
+import { TrimWhitespacePipe } from './common/pipes/trim-whitespace';
+import { SWAGGER_RELATIVE_URL } from './common/swagger';
+import { AppConfig } from './config/app';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,15 +19,13 @@ async function bootstrap() {
   const { server, swagger, environment } =
     configService.getOrThrow<AppConfig>('app');
 
-  app
-    .useGlobalPipes(
-      new TrimWhitespacePipe(),
-      new ValidationPipe({
-        transform: true,
-        whitelist: true,
-      }),
-    )
-    .setGlobalPrefix('v1');
+  app.useGlobalPipes(
+    new TrimWhitespacePipe(),
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
 
   if (swagger.enabled) {
     const swaggerConfig = new DocumentBuilder()
@@ -41,7 +39,8 @@ async function bootstrap() {
         operationsSorter: 'method',
         persistAuthorization: true,
         docExpansion: 'none',
-        onComplete: () => ((document as any).title = 'RMS'),
+        onComplete: () =>
+          ((document as any).title = 'Smart Book Discovery Agent'),
       },
     };
 
