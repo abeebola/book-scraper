@@ -26,6 +26,21 @@ export class BookEntity extends BaseAbstractEntity<BookResponse> {
   @Column({ nullable: true })
   description?: string;
 
+  @Column({ nullable: true })
+  summary?: string;
+
+  @Column()
+  relevanceScore: number;
+
+  @Column()
+  discountAmount: number;
+
+  @Column()
+  discountPercentage: number;
+
+  @Column()
+  valueScore: number;
+
   @Column()
   url: string;
 

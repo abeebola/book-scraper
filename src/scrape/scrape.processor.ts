@@ -2,9 +2,11 @@ import { InjectFlowProducer, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FlowChildJob, FlowProducer, Job } from 'bullmq';
 import { Repository } from 'typeorm';
+import { roundToPrecision } from '../common/utils/amounts';
 import { BookEntity } from './book.entity';
 import { EnrichDataJob } from './scrape.dto';
 import { getNewBrowserContext } from './utils/browser';
+import { run } from './utils/openai';
 import {
   getBookDescription,
   getSearchResults,
@@ -33,7 +35,7 @@ export class ScrapeConsumer extends WorkerHost {
         return await this.fetchDescription(job.data);
 
       case 'enrich-book-data':
-        return this.enrichBookData(job);
+        return await this.enrichBookData(job);
     }
   }
 
@@ -47,21 +49,29 @@ export class ScrapeConsumer extends WorkerHost {
 
     const books = result.flat().map((book) => ({ ...book, requestId }));
 
+    const sample = books.slice(0, 2);
+
+    /*
+    Looks like a good balance between the number of tabs to open
+    for each background job worker and the amount of books to
+    process at once using OpenAI. This can be tweaked as needed
+    depending on whether we want to optimise for CPU/memory or
+    for cost (per OpenAI prompt).
+    Could be set using an environment variable instead.
+    */
     const BATCH_SIZE = 6;
 
     const childJobs: FlowChildJob[] = [];
 
-    while (books.length) {
-      const batchAmount = Math.min(books.length, BATCH_SIZE);
-      const batch = books.splice(0, batchAmount);
+    while (sample.length) {
+      const batchAmount = Math.min(sample.length, BATCH_SIZE);
+      const batch = sample.splice(0, batchAmount);
       childJobs.push({
         name: 'fetch-description',
         queueName: 'book-queue',
         data: batch,
       });
     }
-
-    console.log({ childJobs });
 
     await this.bookProducer.add({
       name: 'enrich-book-data',
@@ -78,9 +88,9 @@ export class ScrapeConsumer extends WorkerHost {
 
         const description = await getBookDescription(page, book.url);
 
-        console.info({ description });
-
         book.description = description ?? '';
+
+        page.close().catch(() => {});
 
         return book;
       }),
@@ -90,8 +100,33 @@ export class ScrapeConsumer extends WorkerHost {
   async enrichBookData(job: Job<any, any, string>) {
     const childValues = await job.getChildrenValues();
 
-    console.log('Child values:', childValues);
+    const bookResults: BookEntity[][] = Object.values(childValues);
 
-    return null;
+    const updatedBooksPromises = bookResults.map(async (books) => {
+      const response = await run(books);
+
+      const responseMap: Map<string, any> = new Map(
+        response.map((x) => [x.id, x]),
+      );
+
+      return books.map((book) => {
+        const entry = responseMap.get(book.id);
+
+        book.author = entry.authors || null;
+        book.discountAmount = roundToPrecision(entry.discountAmount);
+        book.discountPercentage = roundToPrecision(entry.discountPercentage);
+        book.relevanceScore = roundToPrecision(entry.relevanceScore);
+        book.summary = entry.summary;
+        book.valueScore = roundToPrecision(entry.valueScore);
+
+        return book;
+      });
+    });
+
+    const allBooks = await Promise.all(updatedBooksPromises).then((x) =>
+      x.flat(),
+    );
+
+    console.info(allBooks);
   }
 }

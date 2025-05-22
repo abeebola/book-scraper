@@ -31,6 +31,7 @@ export type AppConfig = {
     version: string;
     level: LogLevel;
   };
+  openAiKey: string;
 };
 
 const schema = Joi.object({
@@ -53,9 +54,10 @@ const schema = Joi.object({
       .valid(...logLevels)
       .required(),
   }),
+  openAiKey: Joi.string().required(),
 });
 
-export const getConfig = () => {
+export const getConfig = (): AppConfig => {
   const name = process.env.APP_NAME ?? APP_NAME;
   process.env.APP_NAME = name;
 
@@ -82,6 +84,7 @@ export const getConfig = () => {
       version,
       level: (process.env.LOG_LEVEL ?? 'log') as LogLevel,
     },
+    openAiKey: process.env.OPENAI_API_KEY!,
   };
 };
 

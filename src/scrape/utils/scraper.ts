@@ -1,6 +1,7 @@
 import { BrowserContext, Page } from '@playwright/test';
-import { getNewBrowserContext } from './browser';
+import { v4 as uuidv4 } from 'uuid';
 import { BookEntity } from '../book.entity';
+import { getNewBrowserContext } from './browser';
 
 let context: BrowserContext;
 
@@ -50,11 +51,12 @@ export const getSearchResults = async (url: string) => {
       );
 
       return Object.assign(new BookEntity(), {
+        id: uuidv4(),
         title,
         url,
         originalPrice,
         currentPrice,
-      });
+      }) as BookEntity;
     }),
   );
 

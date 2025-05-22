@@ -1,8 +1,9 @@
 import { OpenAI } from 'openai';
 import { ChatCompletionTool } from 'openai/resources/chat';
+import { OpenAiResult } from '../../common/types/openai';
 import { BookEntity } from '../book.entity';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let openai: OpenAI;
 
 const tools: ChatCompletionTool[] = [
   {
@@ -19,6 +20,7 @@ const tools: ChatCompletionTool[] = [
               type: 'object',
               properties: {
                 id: { type: 'string' },
+                requestId: { type: 'string' },
                 summary: { type: 'string' },
                 relevanceScore: { type: 'number', minimum: 0, maximum: 100 },
                 discountAmount: { type: 'number' },
@@ -31,13 +33,14 @@ const tools: ChatCompletionTool[] = [
               },
               required: [
                 'id',
+                'requestId',
                 'summary',
                 'relevanceScore',
                 'discountAmount',
                 'discountPercentage',
                 'valueScore',
                 'authors',
-              ],
+              ] satisfies (keyof OpenAiResult)[],
             },
           },
         },
@@ -48,6 +51,10 @@ const tools: ChatCompletionTool[] = [
 ];
 
 export const run = async (books: BookEntity[]) => {
+  if (!openai) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+
   const userPrompt = `
 Given the following books:
 
@@ -71,12 +78,15 @@ For each one:
   const toolCall = response.choices[0].message.tool_calls?.[0];
 
   if (toolCall) {
-    const args = JSON.parse(toolCall.function.arguments);
-    console.log('Tool called with results:\n', JSON.stringify(args, null, 2));
+    const response = JSON.parse(toolCall.function.arguments);
+
+    return response.results;
   } else {
-    console.log(
+    console.warn(
       'No tool was called. Response:\n',
       response.choices[0].message.content,
     );
+
+    return [];
   }
 };
