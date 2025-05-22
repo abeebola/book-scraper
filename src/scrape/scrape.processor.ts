@@ -1,8 +1,11 @@
+import { HttpService } from '@nestjs/axios';
 import { InjectFlowProducer, Processor, WorkerHost } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FlowChildJob, FlowProducer, Job } from 'bullmq';
 import { Repository } from 'typeorm';
 import { roundToPrecision } from '../common/utils/amounts';
+import { AppConfig } from '../config/app';
 import { BookEntity } from './book.entity';
 import { ScrapeRequestEntity } from './scrape-request.entity';
 import { EnrichDataJob } from './scrape.dto';
@@ -21,6 +24,8 @@ export class ScrapeConsumer extends WorkerHost {
     private readonly repository: Repository<BookEntity>,
     @InjectFlowProducer('book-producer')
     private readonly bookProducer: FlowProducer,
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
   ) {
     super();
   }
@@ -37,6 +42,9 @@ export class ScrapeConsumer extends WorkerHost {
 
       case 'enrich-book-data':
         return await this.enrichBookData(job);
+
+      case 'send-google-sheet':
+        return await this.sendToGoogleSheet(job);
 
       case 'update-scrape-request':
         return await this.updateScrapeRequest(job);
@@ -78,13 +86,19 @@ export class ScrapeConsumer extends WorkerHost {
     }
 
     await this.bookProducer.add({
-      name: 'update-scrape-request',
+      name: 'send-google-sheet',
       queueName: 'book-queue',
       children: [
         {
-          name: 'enrich-book-data',
+          name: 'update-scrape-request',
           queueName: 'book-queue',
-          children: childJobs,
+          children: [
+            {
+              name: 'enrich-book-data',
+              queueName: 'book-queue',
+              children: childJobs,
+            },
+          ],
         },
       ],
     });
@@ -157,6 +171,42 @@ export class ScrapeConsumer extends WorkerHost {
       });
 
       console.info('Done.');
+
+      return books;
+    } catch (error) {
+      console.error(error);
+
+      throw error;
+    }
+  }
+
+  async sendToGoogleSheet(job: Job<any, any, string>) {
+    const childValues = await job.getChildrenValues();
+
+    const books: BookEntity[] = Object.values(childValues)[0];
+
+    if (!books?.length) return;
+
+    const webhookUrl =
+      this.configService.getOrThrow<AppConfig>('app').makeWebhookUrl;
+
+    try {
+      await this.httpService.axiosRef.post(webhookUrl, {
+        rows: books.map((book) => ({
+          Title: book.title,
+          Author: book.author ?? '',
+          Description: book.description,
+          Summary: book.summary,
+          'Current Price': book.currentPrice,
+          'Original Price': book.originalPrice,
+          'Discount Amount': book.discountAmount,
+          'Discount %': book.discountPercentage,
+          URL: book.url,
+          'Value Score': book.valueScore,
+        })),
+      });
+
+      console.info('Data sent to make.com.');
     } catch (error) {
       console.error(error);
 

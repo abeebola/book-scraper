@@ -32,6 +32,7 @@ export type AppConfig = {
     level: LogLevel;
   };
   openAiKey: string;
+  makeWebhookUrl: string;
 };
 
 const schema = Joi.object({
@@ -55,6 +56,7 @@ const schema = Joi.object({
       .required(),
   }),
   openAiKey: Joi.string().required(),
+  makeWebhookUrl: Joi.string().required(),
 });
 
 export const getConfig = (): AppConfig => {
@@ -85,6 +87,7 @@ export const getConfig = (): AppConfig => {
       level: (process.env.LOG_LEVEL ?? 'log') as LogLevel,
     },
     openAiKey: process.env.OPENAI_API_KEY!,
+    makeWebhookUrl: process.env.MAKE_WEBHOOK_URL!,
   };
 };
 

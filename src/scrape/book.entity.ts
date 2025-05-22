@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { AfterLoad, Column, Entity, ManyToOne } from 'typeorm';
 import { BaseAbstractEntity } from '../common/types/entity';
 import { BookResponse } from './book.dto';
 import { ScrapeRequestEntity } from './scrape-request.entity';
@@ -43,6 +43,23 @@ export class BookEntity extends BaseAbstractEntity<BookResponse> {
 
   @Column()
   url: string;
+
+  @AfterLoad()
+  formatAmounts() {
+    this.discountAmount &&
+      (this.discountAmount = parseFloat(this.discountAmount.toString()));
+
+    this.discountPercentage &&
+      (this.discountPercentage = parseFloat(
+        this.discountPercentage.toString(),
+      ));
+
+    this.relevanceScore &&
+      (this.relevanceScore = parseFloat(this.relevanceScore.toString()));
+
+    this.valueScore &&
+      (this.valueScore = parseFloat(this.valueScore.toString()));
+  }
 
   dtoClass = BookResponse;
 }
