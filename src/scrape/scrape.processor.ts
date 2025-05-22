@@ -53,15 +53,11 @@ export class ScrapeConsumer extends WorkerHost {
 
   async fetchBooks(data: EnrichDataJob) {
     const { requestId, theme } = data;
-    const urls = [1].map((page) => getSearchUrl(theme, page));
-    // TODO: Uncomment before final push
-    // const urls = [1, 2].map((page) => getSearchUrl(theme, page));
+    const urls = [1, 2].map((page) => getSearchUrl(theme, page));
 
     const result = await Promise.all(urls.map((url) => getSearchResults(url)));
 
     const books = result.flat().map((book) => ({ ...book, requestId }));
-
-    const sample = books.slice(0, 2);
 
     /*
     Looks like a good balance between the number of tabs to open
@@ -75,9 +71,9 @@ export class ScrapeConsumer extends WorkerHost {
 
     const childJobs: FlowChildJob[] = [];
 
-    while (sample.length) {
-      const batchAmount = Math.min(sample.length, BATCH_SIZE);
-      const batch = sample.splice(0, batchAmount);
+    while (books.length) {
+      const batchAmount = Math.min(books.length, BATCH_SIZE);
+      const batch = books.splice(0, batchAmount);
       childJobs.push({
         name: 'fetch-description',
         queueName: 'book-queue',
