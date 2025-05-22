@@ -39,21 +39,15 @@ export class ScrapeService {
   }
 
   async getById(id: string) {
-    try {
-      const request = await this.repository.findOne({
-        where: { id },
-        relations: { books: true },
-      });
+    const request = await this.repository.findOne({
+      where: { id },
+      relations: { books: true },
+    });
 
-      if (!request) {
-        throw new NotFoundException('Job not found.');
-      }
-
-      return request;
-    } catch (error) {
-      console.error(error);
-
-      throw new InternalServerErrorException();
+    if (!request) {
+      throw new NotFoundException('Job not found.');
     }
+
+    return request;
   }
 }

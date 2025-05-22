@@ -102,7 +102,7 @@ export class ScrapeConsumer extends WorkerHost {
 
   async fetchDescription(books: BookEntity[]): Promise<BookEntity[]> {
     const context = await getNewBrowserContext();
-    return Promise.all(
+    const results = await Promise.all(
       books.map(async (book) => {
         const page = await context.newPage();
 
@@ -110,11 +110,13 @@ export class ScrapeConsumer extends WorkerHost {
 
         book.description = description ?? '';
 
-        page.close().catch(() => {});
-
         return book;
       }),
     );
+
+    void context.close();
+
+    return results;
   }
 
   async enrichBookData(job: Job<any, any, string>) {
@@ -200,8 +202,9 @@ export class ScrapeConsumer extends WorkerHost {
           'Original Price': book.originalPrice,
           'Discount Amount': book.discountAmount,
           'Discount %': book.discountPercentage,
-          URL: book.url,
           'Value Score': book.valueScore,
+          'Relevance Score': book.relevanceScore,
+          URL: book.url,
         })),
       });
 

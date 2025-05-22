@@ -13,6 +13,16 @@ export const getNewPage = async () => {
   return context.newPage();
 };
 
+export const closeBrowserContext = async () => {
+  if (context) {
+    try {
+      await context.close();
+    } catch {
+      // do nothing.
+    }
+  }
+};
+
 export const getSearchUrl = (searchTerm: string, page: number) => {
   const BASE_URL = 'https://bookdp.com.au';
   const searchParams = new URLSearchParams();

@@ -11,6 +11,7 @@ import { APP_NAME, APP_VERSION } from './common/constants';
 import { TrimWhitespacePipe } from './common/pipes/trim-whitespace';
 import { SWAGGER_RELATIVE_URL } from './common/swagger';
 import { AppConfig } from './config/app';
+import { closeBrowserContext } from './scrape/utils/scraper';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -53,9 +54,17 @@ async function bootstrap() {
     );
   }
 
+  const cleanUp = async () => {
+    console.debug('Server shutting down');
+    await closeBrowserContext();
+  };
+
+  process.on('SIGINT', () => {
+    void cleanUp().then(() => process.exit(0));
+  });
+
   await app.listen(server.port, '0.0.0.0');
 
-  // TODO: Replace with logger
   const appUrl = `${environment === 'development' ? 'http://localhost:' : ''}${
     server.port
   }`;
