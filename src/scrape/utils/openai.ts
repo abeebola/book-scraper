@@ -69,12 +69,15 @@ For each one:
 `;
 
   try {
+    console.info('Sending prompt to Open AI');
     const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
       messages: [{ role: 'user', content: userPrompt }],
       tools,
       tool_choice: 'auto',
     });
+
+    console.info('Done.');
 
     const toolCall = response.choices[0].message.tool_calls?.[0];
 
