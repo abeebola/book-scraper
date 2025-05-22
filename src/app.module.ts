@@ -5,14 +5,24 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from './common/utils/database';
 import config from './config';
 import { DatabaseConfig } from './config/database';
+import { RedisConfig } from './config/redis';
 import { ScrapeModule } from './scrape/scrape.module';
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const { host, password, port } =
+          configService.getOrThrow<RedisConfig>('redis');
+        return {
+          connection: {
+            host,
+            port,
+            password,
+          },
+        };
       },
     }),
     ConfigModule.forRoot({

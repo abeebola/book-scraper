@@ -53,7 +53,7 @@ async function bootstrap() {
     );
   }
 
-  await app.listen(server.port);
+  await app.listen(server.port, '0.0.0.0');
 
   // TODO: Replace with logger
   const appUrl = `${environment === 'development' ? 'http://localhost:' : ''}${

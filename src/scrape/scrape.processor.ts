@@ -147,6 +147,7 @@ export class ScrapeConsumer extends WorkerHost {
       x.flat(),
     );
 
+    console.info('Done enriching data.');
     return allBooks;
   }
 
@@ -156,6 +157,8 @@ export class ScrapeConsumer extends WorkerHost {
     const books: BookEntity[] = Object.values(childValues)[0];
 
     if (!books?.length) return;
+
+    console.info('Updating request status with ID:', books[0].requestId);
 
     try {
       await this.repository.manager.transaction(async (trx) => {

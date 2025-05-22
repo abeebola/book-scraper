@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 export const trimRecursive = <K>(obj: K): K => {
   if (!obj) {
     return obj;
