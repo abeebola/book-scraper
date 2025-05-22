@@ -6,7 +6,7 @@ import { ScrapeRequestEntity } from './scrape-request.entity';
 @Entity('books')
 export class BookEntity extends BaseAbstractEntity<BookResponse> {
   @ManyToOne(() => ScrapeRequestEntity, { onDelete: 'CASCADE' })
-  request: string;
+  request: ScrapeRequestEntity;
 
   @Column({ type: 'uuid' })
   requestId: string;

@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { AbstractDto } from '../common/types/dto';
-import { BookResponse } from './book.dto';
 import { ScrapeRequestEntity } from './scrape-request.entity';
 
 export const requestStatuses = ['pending', 'done', 'failed'] as const;
@@ -25,9 +24,6 @@ export class ScrapeRequestResponse extends AbstractDto {
   @ApiProperty({ example: 'Climate change' })
   theme: string;
 
-  @ApiProperty({ type: BookResponse, isArray: true })
-  books: BookResponse[];
-
   @ApiProperty({ description: 'Date created' })
   createdAt: Date;
 
@@ -39,7 +35,6 @@ export class ScrapeRequestResponse extends AbstractDto {
 
     this.status = entity.status;
     this.theme = entity.theme;
-    this.books = entity.books?.map((x) => x.toDto());
     this.createdAt = entity.createdAt;
     this.updatedAt = entity.updatedAt;
   }

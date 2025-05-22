@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
+import { BookEntity } from './book.entity';
 import { ScrapeRequestEntity } from './scrape-request.entity';
 import { EnrichDataJob, ScrapeRequestDto } from './scrape.dto';
 
@@ -41,7 +42,6 @@ export class ScrapeService {
   async getById(id: string) {
     const request = await this.repository.findOne({
       where: { id },
-      relations: { books: true },
     });
 
     if (!request) {
@@ -49,5 +49,18 @@ export class ScrapeService {
     }
 
     return request;
+  }
+
+  async getBooksByRequestId(requestId: string) {
+    const books = await this.repository.manager.find(BookEntity, {
+      where: {
+        request: {
+          id: requestId,
+          status: 'done',
+        },
+      },
+    });
+
+    return books;
   }
 }

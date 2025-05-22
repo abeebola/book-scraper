@@ -9,6 +9,7 @@ import {
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { ScrapeRequestDto, ScrapeRequestResponse } from './scrape.dto';
 import { ScrapeService } from './scrape.service';
+import { BookResponse } from './book.dto';
 
 @Controller()
 export class ScrapeController {
@@ -27,6 +28,14 @@ export class ScrapeController {
   }
 
   @Get('results/:id')
+  @ApiOkResponse({ type: BookResponse, isArray: true })
+  async getBooks(@Param('id', ParseUUIDPipe) id: string) {
+    const results = await this.service.getBooksByRequestId(id);
+
+    return results.map((x) => x.toDto());
+  }
+
+  @Get('status/:id')
   @ApiOkResponse({ type: ScrapeRequestResponse })
   async getById(@Param('id', ParseUUIDPipe) id: string) {
     const result = await this.service.getById(id);
