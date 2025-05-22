@@ -1,5 +1,9 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
@@ -32,5 +36,24 @@ export class ScrapeService {
     }
 
     return entity;
+  }
+
+  async getById(id: string) {
+    try {
+      const request = await this.repository.findOne({
+        where: { id },
+        relations: { books: true },
+      });
+
+      if (!request) {
+        throw new NotFoundException('Job not found.');
+      }
+
+      return request;
+    } catch (error) {
+      console.error(error);
+
+      throw new InternalServerErrorException();
+    }
   }
 }

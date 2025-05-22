@@ -1,13 +1,20 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiCreatedResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { ScrapeRequestDto, ScrapeRequestResponse } from './scrape.dto';
 import { ScrapeService } from './scrape.service';
 
-@Controller('scrape')
+@Controller()
 export class ScrapeController {
   constructor(private readonly service: ScrapeService) {}
 
-  @Post()
+  @Post('scrape')
   @ApiCreatedResponse({ type: ScrapeRequestResponse })
   async create(@Body() dto: ScrapeRequestDto) {
     const result = await this.service.create(dto);
@@ -17,5 +24,13 @@ export class ScrapeController {
         'Request processing. Please use the job ID to track this request',
       data: result.toDto(),
     };
+  }
+
+  @Get('results/:id')
+  @ApiOkResponse({ type: ScrapeRequestResponse })
+  async getById(@Param('id', ParseUUIDPipe) id: string) {
+    const result = await this.service.getById(id);
+
+    return result.toDto();
   }
 }
