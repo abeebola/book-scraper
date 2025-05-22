@@ -12,6 +12,7 @@ import { ScrapeService } from './scrape.service';
   imports: [
     TypeOrmModule.forFeature([ScrapeRequestEntity, BookEntity]),
     BullModule.registerQueue({ name: 'book-queue' }),
+    BullModule.registerFlowProducer({ name: 'book-producer' }),
   ],
   providers: [ScrapeService, ScrapeConsumer],
 })

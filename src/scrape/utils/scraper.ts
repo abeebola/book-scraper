@@ -1,11 +1,12 @@
-import { chromium, BrowserContext } from '@playwright/test';
-import { BookEntity } from './book.entity';
+import { BrowserContext, Page } from '@playwright/test';
+import { getNewBrowserContext } from './browser';
+import { BookEntity } from '../book.entity';
 
 let context: BrowserContext;
 
 export const getNewPage = async () => {
   if (!context) {
-    context = await chromium.launch().then((browser) => browser.newContext());
+    context = await getNewBrowserContext();
   }
 
   return context.newPage();
@@ -64,4 +65,16 @@ export const getSearchResults = async (url: string) => {
   });
 
   return results;
+};
+
+export const getBookDescription = async (page: Page, url: string) => {
+  await page.goto(url);
+
+  const locator = page.locator('#tab-description');
+
+  await locator.waitFor({ timeout: 3000 });
+
+  const description = await locator.getByRole('paragraph').textContent();
+
+  return description;
 };
