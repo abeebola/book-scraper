@@ -4,6 +4,7 @@ import { FlowChildJob, FlowProducer, Job } from 'bullmq';
 import { Repository } from 'typeorm';
 import { roundToPrecision } from '../common/utils/amounts';
 import { BookEntity } from './book.entity';
+import { ScrapeRequestEntity } from './scrape-request.entity';
 import { EnrichDataJob } from './scrape.dto';
 import { getNewBrowserContext } from './utils/browser';
 import { run } from './utils/openai';
@@ -36,6 +37,9 @@ export class ScrapeConsumer extends WorkerHost {
 
       case 'enrich-book-data':
         return await this.enrichBookData(job);
+
+      case 'update-scrape-request':
+        return await this.updateScrapeRequest(job);
     }
   }
 
@@ -74,9 +78,15 @@ export class ScrapeConsumer extends WorkerHost {
     }
 
     await this.bookProducer.add({
-      name: 'enrich-book-data',
+      name: 'update-scrape-request',
       queueName: 'book-queue',
-      children: childJobs,
+      children: [
+        {
+          name: 'enrich-book-data',
+          queueName: 'book-queue',
+          children: childJobs,
+        },
+      ],
     });
   }
 
@@ -127,6 +137,30 @@ export class ScrapeConsumer extends WorkerHost {
       x.flat(),
     );
 
-    console.info(allBooks);
+    return allBooks;
+  }
+
+  async updateScrapeRequest(job: Job<any, any, string>) {
+    const childValues = await job.getChildrenValues();
+
+    const books: BookEntity[] = Object.values(childValues)[0];
+
+    if (!books?.length) return;
+
+    try {
+      await this.repository.manager.transaction(async (trx) => {
+        await trx.insert(BookEntity, books);
+
+        await trx.update(ScrapeRequestEntity, books[0].requestId, {
+          status: 'done',
+        });
+      });
+
+      console.info('Done.');
+    } catch (error) {
+      console.error(error);
+
+      throw error;
+    }
   }
 }

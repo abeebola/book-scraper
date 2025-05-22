@@ -68,24 +68,30 @@ For each one:
 - Extract author names from the description, if present.
 `;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4-turbo',
-    messages: [{ role: 'user', content: userPrompt }],
-    tools,
-    tool_choice: 'auto',
-  });
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4-turbo',
+      messages: [{ role: 'user', content: userPrompt }],
+      tools,
+      tool_choice: 'auto',
+    });
 
-  const toolCall = response.choices[0].message.tool_calls?.[0];
+    const toolCall = response.choices[0].message.tool_calls?.[0];
 
-  if (toolCall) {
-    const response = JSON.parse(toolCall.function.arguments);
+    if (toolCall) {
+      const response = JSON.parse(toolCall.function.arguments);
 
-    return response.results;
-  } else {
-    console.warn(
-      'No tool was called. Response:\n',
-      response.choices[0].message.content,
-    );
+      return response.results;
+    } else {
+      console.warn(
+        'No tool was called. Response:\n',
+        response.choices[0].message.content,
+      );
+
+      return [];
+    }
+  } catch (error) {
+    console.error(error);
 
     return [];
   }
