@@ -42,7 +42,7 @@ export const getSearchResults = async (searchTerm: string, page: number) => {
 
   console.info(`visiting search URL [${url}] ...`);
 
-  const response = await browserPage.goto(url, { timeout: 10_000 });
+  const response = await browserPage.goto(url, { timeout: 15_000 });
   const status = response?.status();
 
   if (status === 404) {

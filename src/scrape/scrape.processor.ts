@@ -110,10 +110,13 @@ export class ScrapeConsumer extends WorkerHost {
               name: 'enrich-book-data',
               queueName: 'book-queue',
               children: childJobs,
+              opts: { removeOnComplete: true },
             },
           ],
+          opts: { removeOnComplete: true },
         },
       ],
+      opts: { removeOnComplete: true },
     });
   }
 
@@ -144,6 +147,8 @@ export class ScrapeConsumer extends WorkerHost {
     const updatedBooksPromises = bookResults.map(async (books) => {
       const response = await run(books);
 
+      console.log('Response', response);
+
       const responseMap: Map<string, any> = new Map(
         response.map((x) => [x.id, x]),
       );
@@ -162,12 +167,17 @@ export class ScrapeConsumer extends WorkerHost {
       });
     });
 
-    const allBooks = await Promise.all(updatedBooksPromises).then((x) =>
-      x.flat(),
-    );
+    try {
+      console.log('Resolving promises..');
+      const resolved = await Promise.all(updatedBooksPromises);
 
-    console.info('Done enriching data.');
-    return allBooks;
+      const allBooks = resolved.flat();
+
+      console.info('Done enriching data.');
+      return allBooks;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async updateScrapeRequest(job: Job<any, any, string>) {
