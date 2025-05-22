@@ -33,21 +33,37 @@ export const getSearchUrl = (searchTerm: string, page: number) => {
   return `${BASE_URL}/page/${page}/?${searchParams.toString()}`;
 };
 
-export const getSearchResults = async (url: string) => {
+export const getSearchResults = async (searchTerm: string, page: number) => {
+  const url = getSearchUrl(searchTerm, page);
+
   console.info('Opening new page...');
-  const page = await getNewPage();
+
+  const browserPage = await getNewPage();
 
   console.info(`visiting search URL [${url}] ...`);
 
-  await page.goto(url);
+  const response = await browserPage.goto(url, { timeout: 10_000 });
+  const status = response?.status();
 
-  const locator = page.locator('.products');
+  if (status === 404) {
+    return [];
+  }
+
+  const locator = browserPage.locator('.site-main');
 
   await locator.waitFor({ timeout: 3000 });
 
   console.info('finding books...');
 
   const books = await locator.locator('.product-inner .product-summary').all();
+
+  if (!books.length) {
+    browserPage.close().catch(() => {
+      // do nothing
+    });
+
+    return [];
+  }
 
   const results = await Promise.all(
     books.map(async (locator) => {
@@ -72,7 +88,7 @@ export const getSearchResults = async (url: string) => {
 
   console.info('closing page...');
 
-  page.close().catch(() => {
+  browserPage.close().catch(() => {
     // do nothing
   });
 

@@ -11,11 +11,7 @@ import { ScrapeRequestEntity } from './scrape-request.entity';
 import { EnrichDataJob } from './scrape.dto';
 import { getNewBrowserContext } from './utils/browser';
 import { run } from './utils/openai';
-import {
-  getBookDescription,
-  getSearchResults,
-  getSearchUrl,
-} from './utils/scraper';
+import { getBookDescription, getSearchResults } from './utils/scraper';
 
 @Processor('book-queue')
 export class ScrapeConsumer extends WorkerHost {
@@ -53,11 +49,32 @@ export class ScrapeConsumer extends WorkerHost {
 
   async fetchBooks(data: EnrichDataJob) {
     const { requestId, theme } = data;
-    const urls = [1, 2].map((page) => getSearchUrl(theme, page));
 
-    const result = await Promise.all(urls.map((url) => getSearchResults(url)));
+    let result: BookEntity[][];
+
+    try {
+      result = await Promise.all(
+        [1, 2].map((page) => getSearchResults(theme, page)),
+      );
+    } catch (error) {
+      console.error(error);
+      await this.repository.manager.update(ScrapeRequestEntity, requestId, {
+        status: 'failed',
+      });
+
+      return;
+    }
 
     const books = result.flat().map((book) => ({ ...book, requestId }));
+
+    if (!books.length) {
+      console.info('No books found.');
+      await this.repository.manager.update(ScrapeRequestEntity, requestId, {
+        status: 'done',
+      });
+
+      return;
+    }
 
     /*
     Looks like a good balance between the number of tabs to open
