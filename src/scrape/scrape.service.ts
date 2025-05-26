@@ -7,16 +7,17 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
-import { BookEntity } from './book.entity';
+import { BookQueues, FetchBookRequest } from '../book/book.dto';
+import { BookEntity } from '../book/book.entity';
 import { ScrapeRequestEntity } from './scrape-request.entity';
-import { EnrichDataJob, ScrapeRequestDto } from './scrape.dto';
+import { ScrapeRequestDto } from './scrape.dto';
 
 @Injectable()
 export class ScrapeService {
   constructor(
     @InjectRepository(ScrapeRequestEntity)
     private readonly repository: Repository<ScrapeRequestEntity>,
-    @InjectQueue('book-queue')
+    @InjectQueue('book-queue' satisfies BookQueues)
     private readonly bookQueue: Queue,
   ) {}
 
@@ -29,7 +30,7 @@ export class ScrapeService {
       await this.bookQueue.add('fetch-books', {
         requestId: entity.id,
         theme: dto.theme,
-      } satisfies EnrichDataJob);
+      } satisfies FetchBookRequest);
     } catch (error) {
       console.error(error);
 

@@ -7,9 +7,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { BookResponse } from '../book/book.dto';
 import { ScrapeRequestDto, ScrapeRequestResponse } from './scrape.dto';
 import { ScrapeService } from './scrape.service';
-import { BookResponse } from './book.dto';
 
 @Controller()
 export class ScrapeController {

@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { BookModule } from './book/book.module';
 import { SnakeNamingStrategy } from './common/utils/database';
 import config from './config';
 import { DatabaseConfig } from './config/database';
@@ -44,6 +45,7 @@ import { ScrapeModule } from './scrape/scrape.module';
       },
       inject: [ConfigService],
     }),
+    BookModule,
     ScrapeModule,
   ],
 })

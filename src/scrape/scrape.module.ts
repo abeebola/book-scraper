@@ -2,10 +2,9 @@ import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BookEntity } from './book.entity';
+import { BookEntity } from '../book/book.entity';
 import { ScrapeRequestEntity } from './scrape-request.entity';
 import { ScrapeController } from './scrape.controller';
-import { ScrapeConsumer } from './scrape.processor';
 import { ScrapeService } from './scrape.service';
 
 @Module({
@@ -13,9 +12,8 @@ import { ScrapeService } from './scrape.service';
   imports: [
     TypeOrmModule.forFeature([ScrapeRequestEntity, BookEntity]),
     BullModule.registerQueue({ name: 'book-queue' }),
-    BullModule.registerFlowProducer({ name: 'book-producer' }),
     HttpModule,
   ],
-  providers: [ScrapeService, ScrapeConsumer],
+  providers: [ScrapeService],
 })
 export class ScrapeModule {}

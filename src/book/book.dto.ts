@@ -55,3 +55,19 @@ export class BookResponse extends AbstractDto {
     this.valueScore = entity.valueScore;
   }
 }
+
+export type FetchBookRequest = {
+  requestId: string;
+  theme: string;
+};
+
+export type ProcessBookDataRequest = {
+  theme: string;
+  books: BookEntity[];
+};
+
+export type BookQueues =
+  | 'book-queue'
+  | 'book-description-queue'
+  | 'data-enrichment-queue'
+  | 'trigger-document-update-webhook';

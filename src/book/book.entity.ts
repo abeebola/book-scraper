@@ -1,7 +1,7 @@
 import { AfterLoad, Column, Entity, ManyToOne } from 'typeorm';
 import { BaseAbstractEntity } from '../common/types/entity';
 import { BookResponse } from './book.dto';
-import { ScrapeRequestEntity } from './scrape-request.entity';
+import { ScrapeRequestEntity } from '../scrape/scrape-request.entity';
 
 @Entity('books')
 export class BookEntity extends BaseAbstractEntity<BookResponse> {

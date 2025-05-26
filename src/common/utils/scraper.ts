@@ -1,6 +1,6 @@
-import { BrowserContext, Page } from '@playwright/test';
+import { BrowserContext } from '@playwright/test';
 import { v4 as uuidv4 } from 'uuid';
-import { BookEntity } from '../book.entity';
+import { BookEntity } from '../../book/book.entity';
 import { getNewBrowserContext } from './browser';
 
 let context: BrowserContext;
@@ -13,7 +13,7 @@ export const getNewPage = async () => {
   return context.newPage();
 };
 
-export const closeBrowserContext = async () => {
+export const closeBrowserContextss = async () => {
   if (context) {
     try {
       await context.close();
@@ -93,16 +93,4 @@ export const getSearchResults = async (searchTerm: string, page: number) => {
   });
 
   return results;
-};
-
-export const getBookDescription = async (page: Page, url: string) => {
-  await page.goto(url);
-
-  const locator = page.locator('#tab-description');
-
-  await locator.waitFor({ timeout: 3000 });
-
-  const description = await locator.getByRole('paragraph').textContent();
-
-  return description;
 };
