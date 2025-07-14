@@ -84,14 +84,10 @@ The Make.com integration involves creating a Scenario that includes combining a 
 ![Screenshot 2025-05-22 at 9 30 51 AM](https://github.com/user-attachments/assets/9b004ede-f7dd-4797-a00e-e6f6e2597c15)
 
 ## Notes
-#### Limitations
-There were some limitations encountered during this project.
-1. Insufficient time. Due to some unforseen circumstances, I couldn't work on it on the day I received the email. I have spent less than 24 hours on the task.
-2. Throttling. Possibly due to the fact that there are multiple testing the solution using the same API Key, the responses from Open AI were sometimes throttled. I also encountered `Insufficient quota` errors toards the end.
 
-#### Real-world optimisations
+#### Real-world optimisations (TODOs)
 1. In the real world, there would be some form of caching to reduce the amount of requests needed for the enrichment data and also the web scraping. We could cache book data by title, or even ISBN. We could also cache theme results for a suitable interval.
 2. Error-handling could be improved, I could also have used a standard logger instead of using `console.(warn | info)`.
-3. No integration tests due to the time constraint.
+3. No integration tests yet.
    
 
